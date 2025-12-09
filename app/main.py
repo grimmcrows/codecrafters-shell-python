@@ -2,10 +2,12 @@ import sys
 
 
 def main():
-    sys.stdout.write("$ ")
+    while True:
+        sys.stdout.write("$ ")
 
-    if command := input():
-        sys.stdout.write(f"{command}: command not found")
+        if command := input():
+            sys.stdout.write(f"{command}: command not found")
+            sys.stdout.write("\n")
 
 if __name__ == "__main__":
     main()

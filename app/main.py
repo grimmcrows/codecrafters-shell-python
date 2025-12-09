@@ -12,9 +12,9 @@ def handle_type(command: str) -> None:
         return
 
     for path in os_bin_paths:
-        if Path(path).exists() and command in os.listdir(path):
-            if os.access(f"{path}/{command}", os.X_OK):
-                sys.stdout.write(f"{command} is {path}/{command} \n")
+        cmd_path = Path(path) / command
+        if cmd_path.exists() and os.access(cmd_path, os.X_OK):
+                sys.stdout.write(f"{command} is {cmd_path} \n")
                 return
         
     sys.stdout.write(f"{command}: not found \n")

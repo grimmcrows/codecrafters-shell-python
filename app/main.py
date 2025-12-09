@@ -3,9 +3,11 @@ import sys
 
 def main():
     while True:
-        sys.stdout.write("$ ")
-
-        if command := input():
+        command = input("$ ")
+        
+        if command == "exit":
+            break
+        else:
             sys.stdout.write(f"{command}: command not found")
             sys.stdout.write("\n")
 

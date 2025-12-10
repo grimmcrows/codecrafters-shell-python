@@ -3,7 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
-COMMANDS = ["exit", "echo", "type"]
+COMMANDS = ["exit", "echo", "type", "pwd"]
 
 def get_exec_path(command: str) -> Path:
     os_bin_paths = os.environ["PATH"].split(os.pathsep)
@@ -46,6 +46,8 @@ def main():
                 sys.stdout.write(f"{" ".join(args)}\n")
             case "type":
                 handle_type(args[0])
+            case "pwd":
+                sys.stdout.write(f"{os.getcwd()} \n")
             case _:
                 if not handle_command_exec(command, args):
                     sys.stdout.write(f"{command}: command not found")

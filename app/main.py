@@ -37,6 +37,10 @@ def handle_type(command: str) -> None:
     sys.stdout.write(f"{command}: not found \n")
 
 def handle_cd(path: str) -> str|None:
+    if path == "~":
+        os.chdir(os.path.expanduser(path))
+        return
+
     dir = Path(path)
     if not dir.exists():
         return f"{dir}: No such file or directory"

@@ -13,6 +13,13 @@ def get_exec_path(command: str) -> Path:
         if cmd_path.exists() and os.access(cmd_path, os.X_OK):
             return cmd_path
                 
+def format_input(user_input: str) -> tuple[str, list[str]]:
+    sep_by_single_quote = [i.strip() for i in user_input.replace("''", '').split("'") if i.strip()]
+    command, *args = [i.strip() for i in sep_by_single_quote[0].split(" ") if i.strip()]
+    args = args + sep_by_single_quote[1:]
+
+    return command, args
+
 def handle_command_exec(command: str, args: list[str]):
     if get_exec_path(command):
         output = subprocess.run([command] + args, capture_output=True, text=True)
@@ -49,7 +56,9 @@ def handle_cd(path: str) -> str|None:
 
 def main():
     while True:
-        command, *args = input("$ ").split(" ")
+        user_input = input("$ ")
+        command, args = format_input(user_input)
+
         match command:
             case "exit":
                 break

@@ -3,7 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
-COMMANDS = ["exit", "echo", "type", "pwd"]
+COMMANDS = ["exit", "echo", "type", "pwd", "cd"]
 
 def get_exec_path(command: str) -> Path:
     os_bin_paths = os.environ["PATH"].split(os.pathsep)
@@ -36,6 +36,13 @@ def handle_type(command: str) -> None:
 
     sys.stdout.write(f"{command}: not found \n")
 
+def handle_cd(path: str) -> str|None:
+    dir = Path(path)
+    if not dir.exists():
+        return f"{dir}: No such file or directory"
+    
+    os.chdir(dir)
+
 def main():
     while True:
         command, *args = input("$ ").split(" ")
@@ -48,6 +55,9 @@ def main():
                 handle_type(args[0])
             case "pwd":
                 sys.stdout.write(f"{os.getcwd()} \n")
+            case "cd":
+                if dir_not_found := handle_cd(args[0]):
+                    sys.stdout.write(f"{dir_not_found} \n")
             case _:
                 if not handle_command_exec(command, args):
                     sys.stdout.write(f"{command}: command not found")

@@ -30,7 +30,7 @@ def format_input(user_input: str) -> tuple[str, list[str]]:
         if not next_to_backslash:
             if char == "\\" and not in_double_quote and not in_single_quote: 
                 next_to_backslash = True
-            elif char == '"':
+            elif char == '"' and not in_single_quote:
                 in_double_quote = not in_double_quote
             elif char == "'" and not in_double_quote:
                 in_single_quote = not in_single_quote

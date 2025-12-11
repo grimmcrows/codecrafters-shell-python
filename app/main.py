@@ -24,31 +24,49 @@ def format_input(user_input: str) -> tuple[str, list[str]]:
     word = ""
     in_single_quote = False
     in_double_quote = False
-    next_to_backslash = False
+    i = 0
+    length = len(user_input)
 
-    for char in user_input:
-        if not next_to_backslash:
-            if char == "\\" and not in_double_quote and not in_single_quote: 
-                next_to_backslash = True
-            elif char == '"' and not in_single_quote:
-                in_double_quote = not in_double_quote
-            elif char == "'" and not in_double_quote:
-                in_single_quote = not in_single_quote
-            elif char == " " and not in_single_quote and not in_double_quote:
-                if word != "":
+    while i < length:
+        char = user_input[i]
+        if in_double_quote:
+            if char == "\\" and i + 1 < length:
+                next_char = user_input[i + 1]
+                if next_char in ['"', '\\']:
+                    word += next_char
+                    i += 1
+                else:
+                    word += char
+            elif char == '"':
+                in_double_quote = False
+            else:
+                word += char
+        elif in_single_quote:
+            if char == "'":
+                in_single_quote = False
+            else:
+                word += char
+        else:
+            if char == '"':
+                in_double_quote = True
+            elif char == "'":
+                in_single_quote = True
+            elif char == "\\" and i + 1 < length:
+                word += user_input[i + 1]
+                i += 1
+            elif char == " ":
+                if word:
                     args.append(word)
                     word = ""
-                    
-                    continue
             else:
-                word = word + char
-        else:
-            word = word + char
-            next_to_backslash = False
+                word += char
+        i += 1
 
-    args.append(word)
+    if word:
+        args.append(word)
 
-    return args[0], args[1:]
+    command = args[0] if args else ""
+    return command, args[1:]
 
 
 def handle_command_exec(command: str, args: list[str]):

@@ -24,20 +24,27 @@ def format_input(user_input: str) -> tuple[str, list[str]]:
     word = ""
     in_single_quote = False
     in_double_quote = False
+    next_to_backslash = False
 
     for char in user_input:
-        if char == '"':
-            in_double_quote = not in_double_quote
-        elif char == "'" and not in_double_quote:
-            in_single_quote = not in_single_quote
-        elif char == " " and not in_single_quote and not in_double_quote:
-            if word != "":
-                args.append(word)
-                word = ""
-                
-                continue
+        if not next_to_backslash:
+            if char == "\\" and not in_double_quote and not in_single_quote: 
+                next_to_backslash = True
+            elif char == '"':
+                in_double_quote = not in_double_quote
+            elif char == "'" and not in_double_quote:
+                in_single_quote = not in_single_quote
+            elif char == " " and not in_single_quote and not in_double_quote:
+                if word != "":
+                    args.append(word)
+                    word = ""
+                    
+                    continue
+            else:
+                word = word + char
         else:
             word = word + char
+            next_to_backslash = False
 
     args.append(word)
 

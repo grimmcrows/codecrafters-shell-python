@@ -14,11 +14,35 @@ def get_exec_path(command: str) -> Path:
             return cmd_path
                 
 def format_input(user_input: str) -> tuple[str, list[str]]:
-    sep_by_single_quote = [i.strip() for i in user_input.replace("''", '').split("'") if i.strip()]
-    command, *args = [i.strip() for i in sep_by_single_quote[0].split(" ") if i.strip()]
-    args = args + sep_by_single_quote[1:]
+    # sep_by_single_quote = [i.strip() for i in user_input.replace("''", '').split("'") if i.strip()]
+    # command, *args = [i.strip() for i in sep_by_single_quote[0].split(" ") if i.strip()]
+    # args = args + sep_by_single_quote[1:]
 
-    return command, args
+    # return command, args
+
+    args = []
+    word = ""
+    in_single_quote = False
+    in_double_quote = False
+
+    for char in user_input:
+        if char == '"':
+            in_double_quote = not in_double_quote
+        elif char == "'" and not in_double_quote:
+            in_single_quote = not in_single_quote
+        elif char == " " and not in_single_quote and not in_double_quote:
+            if word != "":
+                args.append(word)
+                word = ""
+                
+                continue
+        else:
+            word = word + char
+
+    args.append(word)
+
+    return args[0], args[1:]
+
 
 def handle_command_exec(command: str, args: list[str]):
     if get_exec_path(command):

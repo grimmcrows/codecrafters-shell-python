@@ -14,12 +14,6 @@ def get_exec_path(command: str) -> Path:
             return cmd_path
                 
 def format_input(user_input: str) -> tuple[str, list[str]]:
-    # sep_by_single_quote = [i.strip() for i in user_input.replace("''", '').split("'") if i.strip()]
-    # command, *args = [i.strip() for i in sep_by_single_quote[0].split(" ") if i.strip()]
-    # args = args + sep_by_single_quote[1:]
-
-    # return command, args
-
     args = []
     word = ""
     in_single_quote = False
@@ -66,6 +60,7 @@ def format_input(user_input: str) -> tuple[str, list[str]]:
         args.append(word)
 
     command = args[0] if args else ""
+
     return command, args[1:]
 
 
@@ -81,16 +76,14 @@ def handle_command_exec(command: str, args: list[str]):
 
     return False
 
-def handle_type(command: str) -> None:
+def handle_type(command: str) -> str:
     if command in COMMANDS:
-        sys.stdout.write(f"{command} is a shell builtin \n")
-        return
+        return f"{command} is a shell builtin \n"
     
     if cmd_path := get_exec_path(command):
-        sys.stdout.write(f"{command} is {cmd_path} \n")
-        return
+        return f"{command} is {cmd_path} \n"
 
-    sys.stdout.write(f"{command}: not found \n")
+    return f"{command}: not found \n"
 
 def handle_cd(path: str) -> str|None:
     if path == "~":
@@ -107,23 +100,26 @@ def main():
     while True:
         user_input = input("$ ")
         command, args = format_input(user_input)
+        command_result = ""
 
         match command:
             case "exit":
                 break
             case "echo":
-                sys.stdout.write(f"{" ".join(args)}\n")
+                command_result = f"{" ".join(args)}\n"
             case "type":
-                handle_type(args[0])
+                command_result = handle_type(args[0])
             case "pwd":
-                sys.stdout.write(f"{os.getcwd()} \n")
+                command_result = f"{os.getcwd()} \n"
             case "cd":
                 if dir_not_found := handle_cd(args[0]):
-                    sys.stdout.write(f"{dir_not_found} \n")
+                    command_result = f"{dir_not_found} \n"
             case _:
                 if not handle_command_exec(command, args):
-                    sys.stdout.write(f"{command}: command not found")
-                    sys.stdout.write("\n")
+                    command_result = f"{command}: command not found \n"
+        
+        sys.stdout.write(command_result)
+
 
 if __name__ == "__main__":
     main()

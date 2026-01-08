@@ -64,17 +64,18 @@ def format_input(user_input: str) -> tuple[str, list[str]]:
     return command, args[1:]
 
 
-def handle_command_exec(command: str, args: list[str]):
+def handle_command_exec(command: str, args: list[str]) -> list[tuple[bool, str]]:
     if get_exec_path(command):
+        results = []
         output = subprocess.run([command] + args, capture_output=True, text=True)
         if output.stderr:
-            sys.stderr.write(output.stderr)
+            results.append((False, output.stderr))
         if output.stdout:
-            sys.stdout.write(output.stdout)
+            results.append((True, output.stdout))
         
-        return True
+        return results
 
-    return False
+    return [(False, f"{command}: command not found \n")]
 
 def handle_type(command: str) -> str:
     if command in COMMANDS:
@@ -96,11 +97,46 @@ def handle_cd(path: str) -> str|None:
     
     os.chdir(dir)
 
+def handle_output_redirect(user_command: list[str]) -> tuple[list[str], str|None, str]:
+    pre_output = []
+    output_file = None
+    type = 'stdout'
+    found_output_redirect = False
+    for command in user_command:
+        if command in (">", "1>"):
+            found_output_redirect = True
+            continue
+
+        if command in ("2>"):
+            found_output_redirect = True
+            type = 'errout'
+            continue
+
+        if found_output_redirect:
+            output_file = command
+        else:
+            pre_output.append(command)
+
+    return pre_output, output_file, type
+
+def redirect_to_output_file(result: str, output_file: str) -> None:
+    if os.path.isfile(output_file):
+        os.remove(output_file)
+
+    with open(output_file, "x") as file:
+        if result:
+            file.write(result)
+
+
+
 def main():
     while True:
         user_input = input("$ ")
         command, args = format_input(user_input)
-        command_result = ""
+        args, output_file, output_redirect_type = handle_output_redirect(args)
+
+        command_result = None
+        command_result_err = None
 
         match command:
             case "exit":
@@ -113,12 +149,32 @@ def main():
                 command_result = f"{os.getcwd()} \n"
             case "cd":
                 if dir_not_found := handle_cd(args[0]):
-                    command_result = f"{dir_not_found} \n"
+                    command_result_err = f"{dir_not_found} \n"
             case _:
-                if not handle_command_exec(command, args):
-                    command_result = f"{command}: command not found \n"
+                results = handle_command_exec(command, args)
+
+                for (is_success, result) in results:
+                    if not is_success:
+                        command_result_err = result
+                        continue
+
+                    command_result = result
+
         
-        sys.stdout.write(command_result)
+        if output_file is None:
+            sys.stdout.write(command_result or "")
+            sys.stderr.write(command_result_err or "")
+            continue
+
+        if output_redirect_type == "stdout" and command_result_err:
+            sys.stderr.write(command_result_err)
+            command_result_err = None
+
+        if output_redirect_type == "errout" and command_result:
+            sys.stdout.write(command_result)
+            command_result = None
+
+        redirect_to_output_file(command_result or command_result_err, output_file)
 
 
 if __name__ == "__main__":

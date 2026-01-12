@@ -100,7 +100,7 @@ def handle_cd(path: str) -> str|None:
 def handle_output_redirect(user_command: list[str]) -> tuple[list[str], str|None, str]:
     pre_output = []
     output_file = None
-    type = 'stdout'
+    operation_type = 'stdout'
     found_output_redirect = False
     for command in user_command:
         if command in (">", "1>"):
@@ -109,12 +109,17 @@ def handle_output_redirect(user_command: list[str]) -> tuple[list[str], str|None
         
         if command in (">>", "1>>"):
             found_output_redirect = True
-            type = "append_stdout"
+            operation_type = "append_stdout"
+            continue
+
+        if command in ("2>>"):
+            found_output_redirect = True
+            operation_type = "append_stderr"
             continue
 
         if command in ("2>"):
             found_output_redirect = True
-            type = 'errout'
+            operation_type = 'errout'
             continue
 
         if found_output_redirect:
@@ -122,10 +127,10 @@ def handle_output_redirect(user_command: list[str]) -> tuple[list[str], str|None
         else:
             pre_output.append(command)
 
-    return pre_output, output_file, type
+    return pre_output, output_file, operation_type
 
 def redirect_to_output_file(result: str, output_file: str, optype: str) -> None:
-    if optype not in ("append_stdout"):
+    if optype not in ("append_stdout", "append_stderr"):
         if os.path.isfile(output_file):
             os.remove(output_file)
 
@@ -137,7 +142,6 @@ def redirect_to_output_file(result: str, output_file: str, optype: str) -> None:
     with open(output_file, "a") as file:
             if result:
                 file.write(result)
-
 
 
 def main():
@@ -181,7 +185,7 @@ def main():
             sys.stderr.write(command_result_err)
             command_result_err = None
 
-        if output_redirect_type == "errout" and command_result:
+        if output_redirect_type in ("errout", "append_stderr") and command_result:
             sys.stdout.write(command_result)
             command_result = None
 

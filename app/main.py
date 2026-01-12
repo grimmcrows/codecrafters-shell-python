@@ -106,6 +106,11 @@ def handle_output_redirect(user_command: list[str]) -> tuple[list[str], str|None
         if command in (">", "1>"):
             found_output_redirect = True
             continue
+        
+        if command in (">>", "1>>"):
+            found_output_redirect = True
+            type = "append_stdout"
+            continue
 
         if command in ("2>"):
             found_output_redirect = True
@@ -119,13 +124,19 @@ def handle_output_redirect(user_command: list[str]) -> tuple[list[str], str|None
 
     return pre_output, output_file, type
 
-def redirect_to_output_file(result: str, output_file: str) -> None:
-    if os.path.isfile(output_file):
-        os.remove(output_file)
+def redirect_to_output_file(result: str, output_file: str, optype: str) -> None:
+    if optype not in ("append_stdout"):
+        if os.path.isfile(output_file):
+            os.remove(output_file)
 
-    with open(output_file, "x") as file:
-        if result:
-            file.write(result)
+        with open(output_file, "x") as file:
+            if result:
+                file.write(result)
+        return
+    
+    with open(output_file, "a") as file:
+            if result:
+                file.write(result)
 
 
 
@@ -166,7 +177,7 @@ def main():
             sys.stderr.write(command_result_err or "")
             continue
 
-        if output_redirect_type == "stdout" and command_result_err:
+        if output_redirect_type in ("stdout", "append_stdout") and command_result_err:
             sys.stderr.write(command_result_err)
             command_result_err = None
 
@@ -174,7 +185,7 @@ def main():
             sys.stdout.write(command_result)
             command_result = None
 
-        redirect_to_output_file(command_result or command_result_err, output_file)
+        redirect_to_output_file(command_result or command_result_err, output_file, output_redirect_type)
 
 
 if __name__ == "__main__":

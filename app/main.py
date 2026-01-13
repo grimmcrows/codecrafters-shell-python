@@ -13,6 +13,20 @@ def get_exec_path(command: str) -> Path:
         cmd_path = Path(path) / command
         if cmd_path.exists() and os.access(cmd_path, os.X_OK):
             return cmd_path
+        
+def get_all_exec_in_path() -> list[str]:
+    os_bin_paths = os.environ["PATH"].split(os.pathsep)
+    execs = []
+    for path in os_bin_paths:
+        try:
+            for file in Path(path).iterdir():
+                if file.is_file() and os.access(file, os.X_OK):
+                    execs.append(file.name)
+        except FileNotFoundError:
+            continue
+            
+    return execs
+
                 
 def format_input(user_input: str) -> tuple[str, list[str]]:
     args = []
@@ -144,9 +158,10 @@ def redirect_to_output_file(result: str, output_file: str, optype: str) -> None:
             if result:
                 file.write(result)
 
-
 def completer(text, state):
-    matches = [cmd + " " for cmd in COMMANDS if cmd.startswith(text)]
+    path_and_custom = COMMANDS + get_all_exec_in_path()
+    matches = [cmd + " " for cmd in path_and_custom if cmd.startswith(text)]
+
     if state < len(matches):
         return matches[state]
     

@@ -158,16 +158,54 @@ def redirect_to_output_file(result: str, output_file: str, optype: str) -> None:
             if result:
                 file.write(result)
 
-def completer(text, state):
-    path_and_custom = COMMANDS + get_all_exec_in_path()
-    matches = [cmd + " " for cmd in path_and_custom if cmd.startswith(text)]
+# Track tab presses for the current completion session
+_tab_count = 0
+_last_text = None
 
-    if state < len(matches):
-        return matches[state]
+def completer(text, state):
+    global _tab_count, _last_text
+    
+    # Reset tab count if text changed (user typed something new)
+    if text != _last_text:
+        _tab_count = 0
+        _last_text = text
+    
+    # Increment tab count on first state call
+    if state == 0:
+        _tab_count += 1
+    
+    path_and_custom = set(COMMANDS + get_all_exec_in_path())
+    matches = [cmd for cmd in path_and_custom if cmd.startswith(text)]
+    
+    # Single match - complete immediately with space
+    if len(matches) == 1:
+        if state == 0:
+            return matches[0] + " "
+        return None
+    
+    # Multiple matches
+    if len(matches) > 1:
+        if _tab_count == 1 and state == 0:
+            # First TAB: ring bell only
+            print('\a', end='', flush=True)
+            return None  # Don't complete anything yet
+        
+        elif _tab_count >= 2 and state == 0:
+            # Second TAB: show matches with 2 spaces
+            print()  # New line
+            print("  ".join(sorted(matches)))
+            # Redisplay prompt with current input
+            print(f"$ {readline.get_line_buffer()}", end='', flush=True)
+            return None
+    
+    # No matches
+    if state == 0 and len(matches) == 0:
+        print('\a', end='', flush=True)
     
     return None
 
 readline.set_completer(completer)
+readline.parse_and_bind('set bell-style audible')
 
 # Handle both GNU readline and libedit (macOS)
 if readline.__doc__ and 'libedit' in readline.__doc__:

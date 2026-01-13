@@ -1,6 +1,7 @@
 import sys
 import os
 import subprocess
+import readline
 from pathlib import Path
 
 COMMANDS = ["exit", "echo", "type", "pwd", "cd"]
@@ -143,6 +144,21 @@ def redirect_to_output_file(result: str, output_file: str, optype: str) -> None:
             if result:
                 file.write(result)
 
+
+def completer(text, state):
+    matches = [cmd + " " for cmd in COMMANDS if cmd.startswith(text)]
+    if state < len(matches):
+        return matches[state]
+    
+    return None
+
+readline.set_completer(completer)
+
+# Handle both GNU readline and libedit (macOS)
+if readline.__doc__ and 'libedit' in readline.__doc__:
+    readline.parse_and_bind('bind ^I rl_complete')
+else:
+    readline.parse_and_bind('tab: complete')
 
 def main():
     while True:
